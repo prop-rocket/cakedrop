@@ -1,0 +1,43 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=PT+Sans:wght@400;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: #E8553A;
+    --color-dark: #1A1A2E;
+    --color-gray: #6B7280;
+    --color-light-bg: #FFFBF7;
+    --color-card-bg: #FFF0ED;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-light-bg text-dark font-body antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-heading font-bold;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white font-heading font-bold rounded-button px-6 py-3
+      transition-all duration-200 hover:shadow-button-hover hover:brightness-110;
+  }
+
+  .card {
+    @apply bg-card-bg rounded-card shadow-card p-6;
+  }
+}

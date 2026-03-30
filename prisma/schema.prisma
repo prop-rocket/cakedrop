@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum SubscriptionPlan {
+  STARTER
+  GROWTH
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAUSED
+  CANCELLED
+}
+
+enum CakePreference {
+  EGGLESS
+  EGG
+  VEGAN
+  SUGAR_FREE
+  DEFAULT
+}
+
+enum DeliveryWindow {
+  MORNING
+  AFTERNOON
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  BAKING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  BRANCH_MANAGER
+}
+
+model Company {
+  id                    String             @id @default(uuid())
+  name                  String
+  email                 String             @unique
+  phone                 String?
+  logoUrl               String?
+  gstNumber             String?
+  subscriptionPlan      SubscriptionPlan   @default(STARTER)
+  subscriptionStatus    SubscriptionStatus @default(TRIAL)
+  razorpayCustomerId    String?
+  razorpaySubId         String?
+  trialEndsAt           DateTime?
+  defaultCakePreference CakePreference     @default(EGGLESS)
+  defaultCardMessage    String?            @default("Wishing you a wonderful birthday filled with joy and celebration!")
+  defaultCardSignedBy   String?
+  cardTemplateId        String?            @default("classic")
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  branches  Branch[]
+  employees Employee[]
+  orders    Order[]
+  users     User[]
+  invoices  Invoice[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(ADMIN)
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Branch {
+  id             String         @id @default(uuid())
+  companyId      String
+  company        Company        @relation(fields: [companyId], references: [id])
+  name           String
+  address        String
+  city           String         @default("Chennai")
+  pincode        String
+  contactPerson  String
+  contactPhone   String
+  deliveryWindow DeliveryWindow @default(MORNING)
+  isActive       Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  employees Employee[]
+  orders    Order[]
+}
+
+model Employee {
+  id             String         @id @default(uuid())
+  companyId      String
+  company        Company        @relation(fields: [companyId], references: [id])
+  branchId       String
+  branch         Branch         @relation(fields: [branchId], references: [id])
+  name           String
+  email          String?
+  dateOfBirth    DateTime
+  cakePreference CakePreference @default(DEFAULT)
+  isActive       Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  orders Order[]
+}
+
+model BakeryPartner {
+  id               String   @id @default(uuid())
+  name             String
+  city             String   @default("Chennai")
+  areasServed      Json     // array of pincodes
+  contactPhone     String
+  whatsappNumber   String?
+  email            String?
+  minLeadTimeHrs   Int      @default(24)
+  supportsEggless  Boolean  @default(true)
+  supportsVegan    Boolean  @default(false)
+  supportsSugarFree Boolean @default(false)
+  pricePerCake500g Int      @default(400)
+  pricePerCake1kg  Int      @default(700)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  orders Order[]
+}
+
+model Order {
+  id              String         @id @default(uuid())
+  employeeId      String
+  employee        Employee       @relation(fields: [employeeId], references: [id])
+  companyId       String
+  company         Company        @relation(fields: [companyId], references: [id])
+  branchId        String
+  branch          Branch         @relation(fields: [branchId], references: [id])
+  bakeryPartnerId String?
+  bakeryPartner   BakeryPartner? @relation(fields: [bakeryPartnerId], references: [id])
+  status          OrderStatus    @default(PENDING)
+  cakeType        String?
+  cakeSize        String         @default("500g")
+  cakePreference  CakePreference
+  cardMessage     String?
+  cardTemplate    String         @default("classic")
+  deliveryDate    DateTime
+  actualDeliveryAt DateTime?
+  deliveryPhotoUrl String?
+  deliveryNotes   String?
+  bakeryOrderRef  String?
+  failureReason   String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Invoice {
+  id                 String   @id @default(uuid())
+  companyId          String
+  company            Company  @relation(fields: [companyId], references: [id])
+  razorpayInvId      String?
+  amount             Int      // in paise
+  currency           String   @default("INR")
+  status             String   @default("pending")
+  billingPeriodStart DateTime
+  billingPeriodEnd   DateTime
+  pdfUrl             String?
+  createdAt          DateTime @default(now())
+}
